@@ -1305,10 +1305,12 @@
 
     if (st === 'subpages') {
       if (!item.hasSubmenu) {
-        var linkToInsert = item.link || item.autotext || item.label;
-        if (linkToInsert) {
-          doInsert(linkToInsert);
-        }
+        var repl = '>>' + curProj.identifier + '>' + item.label;
+        ta.value = v.substring(0, tStart) + repl + v.substring(tEnd);
+        tEnd = tStart + repl.length;
+        ta.selectionStart = ta.selectionEnd = tEnd;
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+        ta.focus();
         return;
       }
 
@@ -1328,9 +1330,18 @@
     var item = getSelectedItem(3);
     if (!item || item.section || item.disabled) return;
 
-    var linkToInsert = item.link || item.autotext || item.label;
-    if (linkToInsert) {
-      doInsert(linkToInsert);
+    var ta = activeTa;
+    var v  = ta.value;
+
+    var txt = item.autotext || item.label;
+    if (txt) {
+      var subpageLabel = curSubpage ? getSubpageLabel(curSubpage) : '';
+      var repl = '>>' + curProj.identifier + '>' + subpageLabel + '>' + txt;
+      ta.value = v.substring(0, tStart) + repl + v.substring(tEnd);
+      tEnd = tStart + repl.length;
+      ta.selectionStart = ta.selectionEnd = tEnd;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      ta.focus();
     }
   }
 
