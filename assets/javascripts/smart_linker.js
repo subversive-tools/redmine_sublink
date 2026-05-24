@@ -1590,27 +1590,40 @@
   function h(s)  { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function enc(s){ return encodeURIComponent(s); }
 
-  /* ── Redmine Icon Helpers ────────────────────────────────────────────────── */
+  /* ── Wireframe Icon Helpers ────────────────────────────────────────────────── */
   function getIconHtml(iconName) {
-    var cls = '';
-    if (iconName === 'folder')       cls = 'icon-folder';
-    else if (iconName === 'checked')  cls = 'icon-checked';
-    else if (iconName === 'history')  cls = 'icon-activity';
-    else if (iconName === 'issue')    cls = 'icon-issue';
-    else if (iconName === 'wiki-page') cls = 'icon-wiki';
-    else if (iconName === 'group')    cls = 'icon-users';
-    else if (iconName === 'attachment') cls = 'icon-attachment';
-    else if (iconName === 'file')     cls = 'icon-file';
-    else if (iconName === 'document') cls = 'icon-document';
-    else if (iconName === 'comments') cls = 'icon-comment';
-    else if (iconName === 'package')  cls = 'icon-package';
-    else if (iconName === 'time')     cls = 'icon-calendar';
-    else if (iconName === 'stats')    cls = 'icon-stats';
-    else if (iconName === 'user')     cls = 'icon-user';
-    else if (iconName === 'image-png') cls = 'icon-file';
-    else                              cls = 'icon-' + iconName;
+    var svgContent = '';
+    if (iconName === 'folder') {
+      svgContent = '<path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2z"></path>';
+    } else if (iconName === 'user') {
+      svgContent = '<path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>';
+    } else if (iconName === 'group') {
+      svgContent = '<path d="M9 7a4 4 0 1 0 0 -8 4 4 0 0 0 0 8z"></path><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"></path>';
+    } else if (iconName === 'issue') {
+      svgContent = '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>';
+    } else if (iconName === 'wiki-page') {
+      svgContent = '<path d="M12 4.5V20m0 -15.5C11 3.5 8 3 5.5 3S3.5 3.5 3.5 5.5v12c0 2 2.5 2 5 2s4 -1 4.5 -2.5m0 -11.5c1 -1 4 -1.5 6.5 -1.5s2 .5 2 2.5v12c0 2 -2.5 2 -5 2s-4 -1 -4.5 -2.5"></path>';
+    } else if (iconName === 'attachment') {
+      svgContent = '<path d="M6 12l10-10a5.5 5.5 0 1 1 7.778 7.778l-10 10a3.5 3.5 0 1 1 -4.95 -4.95l10-10a1.5 1.5 0 1 1 2.122 2.122l-8 8"></path>';
+    } else if (iconName === 'file' || iconName === 'document' || iconName === 'image-png') {
+      svgContent = '<path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path>';
+    } else if (iconName === 'comments') {
+      svgContent = '<path d="M21 15a2 2 0 0 1 -2 2h-2l-4 4v-4h-2a2 2 0 0 1 -2 -2v-3a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v3z"></path><path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"></path>';
+    } else if (iconName === 'package') {
+      svgContent = '<path d="M12 3l8 4.5v9l-8 4.5l-8 -4.5v-9l8 -4.5"></path><path d="M12 12l8 -4.5"></path><path d="M12 12v9"></path><path d="M12 12l-8 -4.5"></path><path d="M16 5.25l-8 4.5"></path>';
+    } else if (iconName === 'time') {
+      svgContent = '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>';
+    } else if (iconName === 'stats') {
+      svgContent = '<path d="M3 3v18h18"></path><path d="M7 6h8"></path><path d="M10 11h9"></path><path d="M6 16h6"></path>';
+    } else if (iconName === 'checked') {
+      svgContent = '<circle cx="12" cy="12" r="10"></circle><path d="M9 12l2 2l4 -4"></path>';
+    } else if (iconName === 'history') {
+      svgContent = '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline><path d="M12 2a10 10 0 1 0 10 10"></path>';
+    } else {
+      svgContent = '<circle cx="12" cy="12" r="10"></circle>';
+    }
 
-    return '<span class="icon ' + cls + ' sl-icon"></span>';
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="icon-svg sl-icon">' + svgContent + '</svg>';
   }
 
   function findFirstSelectable(items, colNum) {
