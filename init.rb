@@ -21,4 +21,5 @@ Redmine::Plugin.register :redmine_sublink do
 end
 
 # Load the hook class — self-registers with Redmine::Hook on load
+require_relative 'lib/macro_autocomplete_hook'
 SublinkerHook
