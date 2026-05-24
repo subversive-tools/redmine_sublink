@@ -11,15 +11,18 @@
   function createDropdown() {
     var d = document.createElement('div');
     // Reuse Redmine's existing .tribute-container styles (tribute-5.1.3.css + application.css)
-    d.className = 'tribute-container subcomplete-container';
-    d.style.display = 'none';
+    d.className = 'tribute-container sublink-container';
+    d.style.display  = 'none';
+    // fixed: viewport-relative, immune to overflow:hidden on any ancestor
+    d.style.position = 'fixed';
+    d.style.zIndex   = '99999';
     d.setAttribute('role', 'listbox');
 
     macList = document.createElement('ul');
     d.appendChild(macList);
 
     macDetail = document.createElement('div');
-    macDetail.className = 'subcomplete-detail';
+    macDetail.className = 'sublink-detail';
     macDetail.style.display = 'none';
     d.appendChild(macDetail);
 
@@ -30,14 +33,26 @@
   // ── Attach to textarea ───────────────────────────────────────────────────────
 
   function attach(textarea) {
-    if (textarea._subcompleteBound) return;
-    textarea._subcompleteBound = true;
+    if (textarea._sublinkBound) return;
+    textarea._sublinkBound = true;
 
     textarea.addEventListener('input', function () { onInput(this); });
     textarea.addEventListener('keydown', onKeydown.bind(textarea));
     textarea.addEventListener('blur', function () {
       setTimeout(hide, 150);
     });
+  }
+
+  // Attach to all matching textareas in a given root element
+  function attachAll(root) {
+    var selector = 'textarea.wiki-edit, textarea[id$="_notes"], textarea[id="notes"], textarea[name="notes"]';
+    var textareas = root.querySelectorAll ? root.querySelectorAll(selector) : [];
+    textareas.forEach(attach);
+
+    // Also handle the root itself if it matches
+    if (root.matches && root.matches(selector)) {
+      attach(root);
+    }
   }
 
   function onInput(textarea) {
@@ -183,18 +198,25 @@
   }
 
   // ── Positioning (mirror-div technique) ───────────────────────────────────────
+  // Uses viewport coordinates (no scroll offset) because the dropdown is position:fixed.
 
   function position(textarea) {
     var cursorPos = measureCursorOffset(textarea);
     var taRect    = textarea.getBoundingClientRect();
-    var scrollX   = window.pageXOffset;
-    var scrollY   = window.pageYOffset;
 
-    var left = taRect.left + scrollX + cursorPos.left;
-    var top  = taRect.top  + scrollY + cursorPos.top + cursorPos.lineHeight + 2;
+    // Viewport-relative coordinates for position:fixed
+    var left = taRect.left + cursorPos.left;
+    var top  = taRect.top  + cursorPos.top + cursorPos.lineHeight + 2;
 
-    var maxLeft = scrollX + window.innerWidth - 380;
-    left = Math.min(left, maxLeft);
+    // Clamp so the dropdown never runs off the right edge
+    var maxLeft = window.innerWidth - 382;
+    left = Math.max(4, Math.min(left, maxLeft));
+
+    // Flip upward if the dropdown would extend below the viewport
+    var dropH = dropdown.offsetHeight || 240;
+    if (top + dropH > window.innerHeight - 8) {
+      top = taRect.top + cursorPos.top - dropH - 4;
+    }
 
     dropdown.style.left = left + 'px';
     dropdown.style.top  = top  + 'px';
@@ -255,6 +277,46 @@
     return str.length > len ? str.substring(0, len) + '…' : str;
   }
 
+  // ── Patch Redmine's Tribute @-mention ────────────────────────────────────────
+  // • Shows the dropdown immediately when @ is typed at a word boundary,
+  //   instead of Redmine's default of requiring ≥ 1 character first.
+  // • Caps every result set to MAX_MENTION_RESULTS so large installs stay fast.
+
+  var MAX_MENTION_RESULTS = 10;
+
+  function patchTributeOnElement(el) {
+    if (el._sublinkTributePatchDone) return;
+    // Tribute 5.x attaches the instance as element.tribute (fallbacks for other versions)
+    var tribute = el.tribute || el._tribute || el._tributeInstance;
+    if (!tribute || !tribute.collection) return;
+
+    tribute.collection.forEach(function (col) {
+      if (col.trigger !== '@') return;
+
+      // 0 chars needed after @ → dropdown opens immediately
+      col.menuShowMinLength = 0;
+
+      // Wrap values() to cap results at MAX_MENTION_RESULTS
+      if (!col._sublinkLimited) {
+        var orig = col.values;
+        col.values = function (text, cb) {
+          orig.call(col, text, function (results) {
+            cb((results || []).slice(0, MAX_MENTION_RESULTS));
+          });
+        };
+        col._sublinkLimited = true;
+      }
+    });
+
+    el._sublinkTributePatchDone = true;
+  }
+
+  function patchAllTribute() {
+    var sel = 'textarea.wiki-edit, textarea[id$="_notes"], ' +
+              'textarea[id="notes"], textarea[name="notes"]';
+    document.querySelectorAll(sel).forEach(patchTributeOnElement);
+  }
+
   // ── Init ─────────────────────────────────────────────────────────────────────
 
   function init() {
@@ -263,19 +325,35 @@
 
     dropdown = createDropdown();
 
-    document.querySelectorAll('textarea.wiki-edit').forEach(attach);
+    // Attach to all wiki-edit textareas present at load time
+    // Covers: wiki pages, issue descriptions, issue notes, journal edits,
+    //         news comments, forum messages, project/document descriptions etc.
+    attachAll(document);
 
-    // Watch for dynamically added textareas (e.g. preview toggle)
+    // Watch for dynamically added textareas (e.g. AJAX-loaded forms,
+    // inline edit panels, comment edit links, issue update forms)
     var observer = new MutationObserver(function (mutations) {
       mutations.forEach(function (m) {
         m.addedNodes.forEach(function (node) {
           if (node.nodeType !== 1) return;
-          if (node.matches && node.matches('textarea.wiki-edit')) attach(node);
-          if (node.querySelectorAll) node.querySelectorAll('textarea.wiki-edit').forEach(attach);
+          attachAll(node);
+          // Also patch Tribute instances that Redmine may attach to the new node
+          setTimeout(function () { patchAllTribute(); }, 200);
         });
       });
     });
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // Fallback: re-scan every second for a few seconds after load.
+    // Covers both macro textareas and Tribute @-mention patching because
+    // Tribute is initialised by Redmine's own JS after our script runs.
+    var scanCount = 0;
+    var scanTimer = setInterval(function () {
+      attachAll(document);
+      patchAllTribute();
+      scanCount++;
+      if (scanCount >= 5) clearInterval(scanTimer);
+    }, 1000);
   }
 
   if (document.readyState === 'loading') {

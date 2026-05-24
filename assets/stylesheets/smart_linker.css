@@ -1,0 +1,152 @@
+/*
+ * smart_linker.css — Redmine Sublink: Smart Linker Panel
+ */
+
+/* ── Panel ───────────────────────────────────────────────────────────────── */
+.sl-panel {
+  border: 1px solid #b0bec5;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.sl-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 12px;
+  background: linear-gradient(135deg, #2c5282 0%, #2b6cb0 100%);
+  color: #fff;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+.sl-back {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  font-size: 17px;
+  padding: 0 6px 0 0;
+  margin: 0;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.12s;
+}
+.sl-back:hover { color: #fff; }
+
+.sl-title {
+  font-weight: 600;
+  font-size: 13px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+/* ── Suchfeld ────────────────────────────────────────────────────────────── */
+.sl-search {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: #f8fafc;
+  color: #1a202c;
+  transition: background 0.1s, border-color 0.1s;
+}
+.sl-search:focus {
+  background: #fff;
+  border-bottom-color: #4299e1;
+}
+.sl-search::placeholder { color: #a0aec0; }
+
+/* ── Ergebnisliste ───────────────────────────────────────────────────────── */
+.sl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.sl-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f4f8;
+  transition: background 0.08s, color 0.08s;
+  min-height: 36px;
+  box-sizing: border-box;
+}
+.sl-list li:last-child { border-bottom: none; }
+
+.sl-list li:hover,
+.sl-list li.sl-selected {
+  background: #2b6cb0;
+  color: #fff;
+}
+
+/* Abschnitts-Trenner */
+.sl-list li.sl-section {
+  padding: 4px 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #718096;
+  background: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: default;
+  min-height: unset;
+}
+.sl-list li.sl-section:hover { background: #f7fafc; color: #718096; }
+
+/* Deaktiviert / Ladehinweis */
+.sl-list li.sl-disabled {
+  color: #a0aec0;
+  cursor: default;
+  font-style: italic;
+}
+.sl-list li.sl-disabled:hover { background: none; color: #a0aec0; }
+
+/* ── Spalten ─────────────────────────────────────────────────────────────── */
+.sl-icon {
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  font-size: 14px;
+  font-style: normal;
+}
+
+.sl-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.sl-sub {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  opacity: 0.55;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sl-list li:hover .sl-sub,
+.sl-list li.sl-selected .sl-sub { opacity: 0.85; }

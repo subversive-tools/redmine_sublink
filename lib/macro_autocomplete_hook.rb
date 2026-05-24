@@ -1,11 +1,13 @@
-class MacroAutocompleteHook < Redmine::Hook::ViewListener
-  CSS_PATH = File.expand_path('../assets/stylesheets/subcomplete.css', File.dirname(__FILE__))
-  JS_PATH  = File.expand_path('../assets/javascripts/macro_autocomplete.js', File.dirname(__FILE__))
+class SublinkerHook < Redmine::Hook::ViewListener
+  BASE = File.dirname(File.dirname(__FILE__))
+
+  CSS_FILES = %w[sublink.css smart_linker.css].freeze
+  JS_FILES  = %w[macro_autocomplete.js smart_linker.js].freeze
 
   def view_layouts_base_html_head(context = {})
     macros  = collect_macros
-    css     = File.exist?(CSS_PATH) ? File.read(CSS_PATH) : ''
-    js_code = File.exist?(JS_PATH)  ? File.read(JS_PATH)  : ''
+    css     = CSS_FILES.filter_map { |f| read_asset('stylesheets', f) }.join("\n")
+    js_code = JS_FILES.filter_map  { |f| read_asset('javascripts',  f) }.join("\n")
     return '' if js_code.blank?
 
     <<~HTML.html_safe
@@ -18,6 +20,11 @@ class MacroAutocompleteHook < Redmine::Hook::ViewListener
   end
 
   private
+
+  def read_asset(type, filename)
+    path = File.join(BASE, 'assets', type, filename)
+    File.exist?(path) ? File.read(path) : nil
+  end
 
   IMPLICIT_MACROS = [
     { name: 'toc',         desc: 'Table of contents', detail: "Renders a table of contents for the current wiki page.\nUsage: {{toc}}" },
@@ -36,7 +43,7 @@ class MacroAutocompleteHook < Redmine::Hook::ViewListener
 
     (registered + implicit).sort_by { |m| m[:name] }
   rescue => e
-    Rails.logger.warn "[Subcomplete] MacroAutocompleteHook: could not collect macros: #{e.message}"
+    Rails.logger.warn "[Sublink] SublinkerHook: could not collect macros: #{e.message}"
     []
   end
 end
