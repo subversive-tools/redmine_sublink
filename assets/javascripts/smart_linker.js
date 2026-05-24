@@ -1593,7 +1593,7 @@
   /* ── Redmine Icon Helpers ────────────────────────────────────────────────── */
   function getIconHtml(iconName) {
     var cls = '';
-    if (iconName === 'folder')       cls = 'icon-project';
+    if (iconName === 'folder')       cls = 'icon-folder';
     else if (iconName === 'checked')  cls = 'icon-checked';
     else if (iconName === 'history')  cls = 'icon-activity';
     else if (iconName === 'issue')    cls = 'icon-issue';
