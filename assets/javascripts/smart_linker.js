@@ -999,7 +999,7 @@
       return [{ label: 'Keine Tickets gefunden', disabled: true }];
     }
     return issuesList.slice(0, 10).map(function (i) {
-      var displayShort = pid === urlProjId ? '#' + i.id : pid + '#' + i.id;
+      var displayShort = '#' + i.id;
       var insertLink = '#' + i.id;
       return {
         icon:     'issue',
