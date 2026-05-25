@@ -9,6 +9,7 @@ de:
   label_no_attachments: "Keine Anhänge"
   label_no_files: "Keine Dateien"
   label_no_documents: "Keine Dokumente gefunden"
+  label_no_news: "Keine News gefunden"
   label_no_anchors: "Keine passenden Anker gefunden"
   label_no_anchors_page: "Keine Überschriften/Anker auf dieser Seite"
   label_link_healed: "Link korrigiert (Ziel verschoben)"

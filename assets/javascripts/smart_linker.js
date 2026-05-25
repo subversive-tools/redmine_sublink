@@ -93,7 +93,8 @@
     attachments:    {},   // keyed by location.pathname
     files:          {},   // keyed by project identifier
     issues:         {},   // keyed by 'projId:query'
-    documents:      {}    // keyed by project identifier
+    documents:      {},   // keyed by project identifier
+    news:           {}    // keyed by project identifier
   };
 
   /* ── DOM ────────────────────────────────────────────────────────────────── */
@@ -476,7 +477,7 @@
 
   function hasSubitems(subpageName) {
     var norm = findSubpageNormalized(subpageName);
-    return norm === 'issues' || norm === 'wiki' || norm === 'members' || norm === 'attachments' || norm === 'files' || norm === 'documents';
+    return norm === 'issues' || norm === 'wiki' || norm === 'members' || norm === 'attachments' || norm === 'files' || norm === 'documents' || norm === 'news';
   }
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -674,6 +675,7 @@
     { name: 'attachments', label: 'Attachments', icon: 'attachment', module: null, link_pattern: null, has_sub: true },
     { name: 'files', label: 'Files', icon: 'file', module: 'files', link_pattern: '"Files":/projects/{pid}/files', has_sub: true },
     { name: 'documents', label: 'Documents', icon: 'document', module: 'documents', link_pattern: '"Documents":/projects/{pid}/documents', has_sub: true },
+    { name: 'news', label: 'News', icon: 'comments', module: 'news', link_pattern: '"News":/projects/{pid}/news', has_sub: true },
     { name: 'boards', label: 'Boards', icon: 'comments', module: 'boards', link_pattern: '"Boards":/projects/{pid}/boards' },
     { name: 'repository', label: 'Repository', icon: 'package', module: 'repository', link_pattern: '"Repository":/projects/{pid}/repository' },
     { name: 'calendar', label: 'Calendar', icon: 'time', module: 'calendar', link_pattern: '"Calendar":/projects/{pid}/issues/calendar' },
@@ -1056,6 +1058,15 @@
       } else {
         cb(filterAndFormatDocuments(cache.documents[pid], q));
       }
+    } else if (normalized === 'news') {
+      if (!cache.news) cache.news = {};
+      if (!cache.news[pid]) {
+        loadNews(pid, function () {
+          cb(filterAndFormatNews(cache.news[pid], q));
+        });
+      } else {
+        cb(filterAndFormatNews(cache.news[pid], q));
+      }
     } else {
       cb([]);
     }
@@ -1296,6 +1307,32 @@
         link = 'document#' + d.id;
       }
       return { icon: 'document', label: d.title, sub: link, autotext: '#' + d.id, link: link };
+    });
+  }
+
+  function loadNews(pid, cb) {
+    loadJSON('/projects/' + pid + '/news.json',
+      function (d) { cache.news[pid] = d.news || []; cb(); },
+      function ()   { cache.news[pid] = [];          cb(); }
+    );
+  }
+
+  function filterAndFormatNews(newsList, q) {
+    var lq = q.toLowerCase().trim();
+    var filtered = newsList.filter(function (n) {
+      return !lq || (n.title || '').toLowerCase().indexOf(lq) !== -1;
+    });
+    if (filtered.length === 0) {
+      return [{ label: t('no_news', 'Keine News gefunden'), disabled: true }];
+    }
+    return filtered.slice(0, 10).map(function (n) {
+      var link = '';
+      if (isMarkdownEditor()) {
+        link = '[' + n.title + '](news:' + n.id + ')';
+      } else {
+        link = 'news#' + n.id;
+      }
+      return { icon: 'comments', label: n.title, sub: link, autotext: '#' + n.id, link: link };
     });
   }
 
@@ -1839,6 +1876,22 @@
       }
     }
 
+    // Pattern 16: News links: news#1, news:Greetings, news:"Some news", sandbox:news:"Some news"
+    var newsRegex = /\b(?:([a-z0-9\-_]+):)?news(?:#(\d+)\b|:([^"\s]+)\b|:"([^"]+)")/gi;
+    while ((match = newsRegex.exec(val)) !== null) {
+      if (pos >= match.index && pos <= match.index + match[0].length) {
+        candidates.push({
+          type: 'news_link',
+          text: match[0],
+          project: match[1] || '',
+          newsId: match[2] || '',
+          newsTitle: match[3] || match[4] || '',
+          start: match.index,
+          end: match.index + match[0].length
+        });
+      }
+    }
+
     if (candidates.length === 0) return null;
     
     // Sort by length descending, so we get the most specific match
@@ -1878,6 +1931,13 @@
       }
       subpageKey = 'documents';
       subitem = candidate.docId ? '#' + candidate.docId : candidate.docTitle;
+    }
+    else if (candidate.type === 'news_link') {
+      if (candidate.project) {
+        project = candidate.project;
+      }
+      subpageKey = 'news';
+      subitem = candidate.newsId ? '#' + candidate.newsId : candidate.newsTitle;
     }
     else if (candidate.type === 'forum_link') {
       if (candidate.project) {
@@ -1922,6 +1982,19 @@
         project = m[1];
         subpageKey = 'issues';
         subitem = '#' + m[2];
+      }
+      else if ((m = url.match(/\/projects\/([^\/]+)\/news\/(\d+)/))) {
+        project = m[1];
+        subpageKey = 'news';
+        subitem = '#' + m[2];
+      }
+      else if ((m = url.match(/\/projects\/([^\/]+)\/news\/?$/))) {
+        project = m[1];
+        subpageKey = 'news';
+      }
+      else if ((m = url.match(/\/news\/(\d+)/))) {
+        subpageKey = 'news';
+        subitem = '#' + m[1];
       }
       else if ((m = url.match(/\/projects\/([^\/]+)\/(issues|activity|files|documents|boards|repository|members)\/?/))) {
         project = m[1];
@@ -2521,9 +2594,53 @@
     return s;
   }
 
+  function scrapeMainMenu() {
+    var menuLinks = document.querySelectorAll('#main-menu a');
+    var currentProjId = detectCurrentProjectIdentifier();
+    if (!currentProjId) return;
+
+    menuLinks.forEach(function (a) {
+      var href = a.getAttribute('href') || '';
+      var label = a.textContent.trim();
+      if (!label) return;
+
+      var m = href.match(/\/projects\/([^\/]+)\/([^\/?#]+)/);
+      if (m) {
+        var pid = m[1];
+        var name = m[2];
+
+        var exists = ALL_SUBPAGES.some(function (sp) {
+          return sp.name.toLowerCase() === name.toLowerCase();
+        });
+
+        if (!exists) {
+          var icon = 'folder';
+          var cls = a.className || '';
+          if (cls.indexOf('icon-') === 0) {
+            icon = cls.substring(5);
+          } else if (cls) {
+            icon = cls.split(' ')[0];
+          }
+
+          var newSp = {
+            name: name,
+            label: label,
+            icon: icon,
+            module: null,
+            link_pattern: '"' + label + '":/projects/{pid}/' + name
+          };
+          ALL_SUBPAGES.push(newSp);
+          subpageLookup[name.toLowerCase()] = name;
+          subpageLookup[label.toLowerCase()] = name;
+        }
+      }
+    });
+  }
+
   /* ── Init ── */
   function init() {
     translateSubpages();
+    scrapeMainMenu();
     buildPanel();
     bindAll(document);
 

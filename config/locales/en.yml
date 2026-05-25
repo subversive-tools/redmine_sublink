@@ -9,6 +9,7 @@ en:
   label_no_attachments: "No attachments"
   label_no_files: "No files"
   label_no_documents: "No documents found"
+  label_no_news: "No news found"
   label_no_anchors: "No matching anchors found"
   label_no_anchors_page: "No headings/anchors on this page"
   label_link_healed: "Link automatically updated (target was moved)"

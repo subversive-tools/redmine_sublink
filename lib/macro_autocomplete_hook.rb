@@ -24,6 +24,7 @@ class SublinkerHook < Redmine::Hook::ViewListener
       repository:  l(:label_repository),
       calendar:    l(:label_calendar),
       gantt:       l(:label_gantt),
+      news:        l(:label_news_plural),
 
       # Custom plugin translations
       loading_projects: l(:label_loading_projects),
@@ -36,6 +37,7 @@ class SublinkerHook < Redmine::Hook::ViewListener
       no_attachments:   l(:label_no_attachments),
       no_files:         l(:label_no_files),
       no_documents:     l(:label_no_documents),
+      no_news:          l(:label_no_news),
       no_anchors:       l(:label_no_anchors),
       no_anchors_page:  l(:label_no_anchors_page),
       link_healed:      l(:label_link_healed)
