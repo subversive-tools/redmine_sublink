@@ -1580,8 +1580,8 @@
       }
     }
 
-    // Pattern 7: Project-specific Issue shorthand link: sandbox#123
-    var issueProjRegex = /\b([a-z0-9\-_]+)#(\d+)\b/gi;
+    // Pattern 7: Project-specific Issue shorthand link: sandbox#123 or sandbox##123
+    var issueProjRegex = /\b([a-z0-9\-_]+)##?(\d+)\b/gi;
     while ((match = issueProjRegex.exec(val)) !== null) {
       if (pos >= match.index && pos <= match.index + match[0].length) {
         candidates.push({
@@ -1595,14 +1595,112 @@
       }
     }
 
-    // Pattern 8: Issue shorthand link: #123 or issue#123
-    var issueRawRegex = /(?:issue)?#(\d+)/g;
+    // Pattern 8: Issue shorthand link: #123, ##123, issue#123, issue##123
+    var issueRawRegex = /(?:issue)?##?(\d+)/g;
     while ((match = issueRawRegex.exec(val)) !== null) {
       if (pos >= match.index && pos <= match.index + match[0].length) {
         candidates.push({
           type: 'issue_raw',
           text: match[0],
           issueId: match[1],
+          start: match.index,
+          end: match.index + match[0].length
+        });
+      }
+    }
+
+    // Pattern 9: Document links: document#17, document:Greetings, document:"Some document", sandbox:document:"Some document"
+    var docRegex = /\b(?:([a-z0-9\-_]+):)?document(?:#(\d+)\b|:([^"\s]+)\b|:"([^"]+)")/gi;
+    while ((match = docRegex.exec(val)) !== null) {
+      if (pos >= match.index && pos <= match.index + match[0].length) {
+        candidates.push({
+          type: 'document_link',
+          text: match[0],
+          project: match[1] || '',
+          docId: match[2] || '',
+          docTitle: match[3] || match[4] || '',
+          start: match.index,
+          end: match.index + match[0].length
+        });
+      }
+    }
+
+    // Pattern 10: Forum links: forum#1, forum:Support, forum:"Technical Support", sandbox:forum:Support
+    var forumRegex = /\b(?:([a-z0-9\-_]+):)?forum(?:#(\d+)\b|:([^"\s]+)\b|:"([^"]+)")/gi;
+    while ((match = forumRegex.exec(val)) !== null) {
+      if (pos >= match.index && pos <= match.index + match[0].length) {
+        candidates.push({
+          type: 'forum_link',
+          text: match[0],
+          project: match[1] || '',
+          forumId: match[2] || '',
+          forumTitle: match[3] || match[4] || '',
+          start: match.index,
+          end: match.index + match[0].length
+        });
+      }
+    }
+
+    // Pattern 11: User links: user#2, user:jsmith, user:"John Smith", sandbox:user:jsmith
+    var userRegex = /\b(?:([a-z0-9\-_]+):)?user(?:#(\d+)\b|:([^"\s]+)\b|:"([^"]+)")/gi;
+    while ((match = userRegex.exec(val)) !== null) {
+      if (pos >= match.index && pos <= match.index + match[0].length) {
+        candidates.push({
+          type: 'user_link',
+          text: match[0],
+          project: match[1] || '',
+          userId: match[2] || '',
+          userLogin: match[3] || match[4] || '',
+          start: match.index,
+          end: match.index + match[0].length
+        });
+      }
+    }
+
+    // Pattern 12: Mention: @jsmith
+    var mentionRegex = /\b@([a-z0-9\-_]+)\b/gi;
+    while ((match = mentionRegex.exec(val)) !== null) {
+      if (pos >= match.index && pos <= match.index + match[0].length) {
+        candidates.push({
+          type: 'user_link',
+          text: match[0],
+          project: '',
+          userId: '',
+          userLogin: match[1],
+          start: match.index,
+          end: match.index + match[0].length
+        });
+      }
+    }
+
+    // Pattern 13: Project links: project#3, project:some-project, project:"Some Project"
+    var projRegex = /\bproject(?:#(\d+)\b|:([^"\s]+)\b|:"([^"]+)")/gi;
+    while ((match = projRegex.exec(val)) !== null) {
+      if (pos >= match.index && pos <= match.index + match[0].length) {
+        candidates.push({
+          type: 'project_link',
+          text: match[0],
+          project: match[2] || match[3] || '',
+          projectId: match[1] || '',
+          start: match.index,
+          end: match.index + match[0].length
+        });
+      }
+    }
+
+    // Pattern 14: Cross-project wiki shortcut: sandbox:
+    var projShortcutRegex = /\b([a-z0-9\-_]+):(?!\/\/)/gi;
+    while ((match = projShortcutRegex.exec(val)) !== null) {
+      var label = match[1].toLowerCase();
+      if (label === 'http' || label === 'https' || label === 'attachment' || label === 'document' || label === 'forum' || label === 'user' || label === 'project' || label === 'version') {
+        continue;
+      }
+      if (pos >= match.index && pos <= match.index + match[0].length) {
+        candidates.push({
+          type: 'project_link',
+          text: match[0],
+          project: match[1],
+          projectId: '',
           start: match.index,
           end: match.index + match[0].length
         });
@@ -1641,6 +1739,32 @@
       project = candidate.project;
       subpageKey = 'wiki';
       subitem = candidate.subitem;
+    }
+    else if (candidate.type === 'document_link') {
+      if (candidate.project) {
+        project = candidate.project;
+      }
+      subpageKey = 'documents';
+      subitem = candidate.docId ? '#' + candidate.docId : candidate.docTitle;
+    }
+    else if (candidate.type === 'forum_link') {
+      if (candidate.project) {
+        project = candidate.project;
+      }
+      subpageKey = 'boards';
+      subitem = candidate.forumId ? '#' + candidate.forumId : candidate.forumTitle;
+    }
+    else if (candidate.type === 'user_link') {
+      if (candidate.project) {
+        project = candidate.project;
+      }
+      subpageKey = 'members';
+      subitem = candidate.userId ? '#' + candidate.userId : candidate.userLogin;
+    }
+    else if (candidate.type === 'project_link') {
+      project = candidate.project || (candidate.projectId ? '#' + candidate.projectId : '');
+      subpageKey = '';
+      subitem = '';
     }
     else {
       var url = candidate.url;
