@@ -54,6 +54,8 @@
   var mouseTrackActive = false;
   var mouseMustLeaveFirst = false;
   var ignoreInput = false;
+  var panelOpenMouseX = -1;
+  var panelOpenMouseY = -1;
 
   /* ── Aktuelles Projekt aus URL ──────────────────────────────────────────── */
   var urlProjId = (location.pathname.match(/\/projects\/([^\/]+)/) || [])[1] || null;
@@ -133,13 +135,22 @@
     });
 
     panel.addEventListener('mouseleave', function () {
-      mouseMustLeaveFirst = false;
       mouseTrackActive = false;
+      panel.classList.add('sl-mouse-inactive');
     });
 
-    panel.addEventListener('mouseenter', function () {
-      if (!mouseMustLeaveFirst) {
+    panel.addEventListener('mousemove', function (e) {
+      if (mouseTrackActive) return;
+      if (panelOpenMouseX !== -1 && panelOpenMouseY !== -1) {
+        var dx = Math.abs(e.clientX - panelOpenMouseX);
+        var dy = Math.abs(e.clientY - panelOpenMouseY);
+        if (dx > 2 || dy > 2) {
+          mouseTrackActive = true;
+          panel.classList.remove('sl-mouse-inactive');
+        }
+      } else {
         mouseTrackActive = true;
+        panel.classList.remove('sl-mouse-inactive');
       }
     });
 
@@ -257,20 +268,16 @@
     posPanel(ta);
 
     if (wasHidden) {
-      var r = panel.getBoundingClientRect();
-      var isInside = (mouseX >= r.left && mouseX <= r.right && mouseY >= r.top && mouseY <= r.bottom);
-      if (isInside) {
-        mouseTrackActive = false;
-        mouseMustLeaveFirst = true;
-      } else {
-        mouseTrackActive = false;
-        mouseMustLeaveFirst = false;
-      }
+      panelOpenMouseX = mouseX;
+      panelOpenMouseY = mouseY;
+      mouseTrackActive = false;
+      panel.classList.add('sl-mouse-inactive');
     }
   }
 
   function closePanel() {
     panel.style.display = 'none';
+    panel.classList.remove('sl-mouse-inactive');
     st = 'closed'; curProj = null; curSubpage = null;
     selIdx1 = selIdx2 = selIdx3 = -1; activeCol = 1;
     col1Items = []; col2Items = []; col3Items = [];
@@ -279,6 +286,8 @@
     setPanelWidth(1);
     mouseTrackActive = false;
     mouseMustLeaveFirst = false;
+    panelOpenMouseX = -1;
+    panelOpenMouseY = -1;
   }
 
   function cancel() {

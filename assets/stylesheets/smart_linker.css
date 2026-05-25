@@ -11,6 +11,11 @@
   overflow: hidden;
 }
 
+.sl-panel.sl-mouse-inactive,
+.sl-panel.sl-mouse-inactive * {
+  cursor: none !important;
+}
+
 
 /* ── Ergebnisliste ───────────────────────────────────────────────────────── */
 .sl-body {
@@ -76,7 +81,7 @@
   box-sizing: border-box;
 }
 
-.sl-list li:hover,
+.sl-panel:not(.sl-mouse-inactive) .sl-list li:hover,
 .sl-list li.highlight {
   background: #759FCF; /* Redmine standard Tribute blue highlight */
   color: #fff;
@@ -97,7 +102,7 @@
   opacity: 0.5;
   padding-left: 6px;
 }
-.sl-list li:hover.sl-has-submenu::after,
+.sl-panel:not(.sl-mouse-inactive) .sl-list li:hover.sl-has-submenu::after,
 .sl-list li.highlight.sl-has-submenu::after {
   opacity: 0.9;
 }
@@ -161,7 +166,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.sl-list li:hover .sl-sub,
+.sl-panel:not(.sl-mouse-inactive) .sl-list li:hover .sl-sub,
 .sl-list li.highlight .sl-sub { opacity: 0.85; }
 
 .sl-col:not(.sl-focused) .sl-list li.highlight .sl-sub {
