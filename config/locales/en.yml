@@ -8,4 +8,5 @@ en:
   label_no_members: "No members"
   label_no_attachments: "No attachments"
   label_no_files: "No files"
+  label_no_documents: "No documents found"
   label_link_healed: "Link automatically updated (target was moved)"

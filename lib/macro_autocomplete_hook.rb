@@ -35,6 +35,7 @@ class SublinkerHook < Redmine::Hook::ViewListener
       no_members:       l(:label_no_members),
       no_attachments:   l(:label_no_attachments),
       no_files:         l(:label_no_files),
+      no_documents:     l(:label_no_documents),
       link_healed:      l(:label_link_healed)
     }
 

@@ -92,7 +92,8 @@
     wiki:           {},   // keyed by project identifier
     attachments:    {},   // keyed by location.pathname
     files:          {},   // keyed by project identifier
-    issues:         {}    // keyed by 'projId:query'
+    issues:         {},   // keyed by 'projId:query'
+    documents:      {}    // keyed by project identifier
   };
 
   /* ── DOM ────────────────────────────────────────────────────────────────── */
@@ -435,7 +436,7 @@
 
   function hasSubitems(subpageName) {
     var norm = findSubpageNormalized(subpageName);
-    return norm === 'issues' || norm === 'wiki' || norm === 'members' || norm === 'attachments' || norm === 'files';
+    return norm === 'issues' || norm === 'wiki' || norm === 'members' || norm === 'attachments' || norm === 'files' || norm === 'documents';
   }
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -632,7 +633,7 @@
     { name: 'members', label: 'Members', icon: 'group', module: null, link_pattern: '"Members":/projects/{pid}', has_sub: true },
     { name: 'attachments', label: 'Attachments', icon: 'attachment', module: null, link_pattern: null, has_sub: true },
     { name: 'files', label: 'Files', icon: 'file', module: 'files', link_pattern: '"Files":/projects/{pid}/files', has_sub: true },
-    { name: 'documents', label: 'Documents', icon: 'document', module: 'documents', link_pattern: '"Documents":/projects/{pid}/documents' },
+    { name: 'documents', label: 'Documents', icon: 'document', module: 'documents', link_pattern: '"Documents":/projects/{pid}/documents', has_sub: true },
     { name: 'boards', label: 'Boards', icon: 'comments', module: 'boards', link_pattern: '"Boards":/projects/{pid}/boards' },
     { name: 'repository', label: 'Repository', icon: 'package', module: 'repository', link_pattern: '"Repository":/projects/{pid}/repository' },
     { name: 'calendar', label: 'Calendar', icon: 'time', module: 'calendar', link_pattern: '"Calendar":/projects/{pid}/issues/calendar' },
@@ -1006,6 +1007,15 @@
       } else {
         cb(filterAndFormatFiles(cache.files[pid], q));
       }
+    } else if (normalized === 'documents') {
+      if (!cache.documents) cache.documents = {};
+      if (!cache.documents[pid]) {
+        loadDocuments(pid, function () {
+          cb(filterAndFormatDocuments(cache.documents[pid], q));
+        });
+      } else {
+        cb(filterAndFormatDocuments(cache.documents[pid], q));
+      }
     } else {
       cb([]);
     }
@@ -1194,6 +1204,32 @@
         }
       }
       return { icon: isImg ? 'image-png' : 'attachment', label: f.filename, sub: link, autotext: f.filename, link: link };
+    });
+  }
+
+  function loadDocuments(pid, cb) {
+    loadJSON('/projects/' + pid + '/documents.json',
+      function (d) { cache.documents[pid] = d.documents || []; cb(); },
+      function ()   { cache.documents[pid] = [];                 cb(); }
+    );
+  }
+
+  function filterAndFormatDocuments(docsList, q) {
+    var lq = q.toLowerCase().trim();
+    var filtered = docsList.filter(function (d) {
+      return !lq || (d.title || '').toLowerCase().indexOf(lq) !== -1;
+    });
+    if (filtered.length === 0) {
+      return [{ label: t('no_documents', 'Keine Dokumente gefunden'), disabled: true }];
+    }
+    return filtered.slice(0, 10).map(function (d) {
+      var link = '';
+      if (isMarkdownEditor()) {
+        link = '[' + d.title + '](document:' + d.id + ')';
+      } else {
+        link = 'document#' + d.id;
+      }
+      return { icon: 'document', label: d.title, sub: link, autotext: '#' + d.id, link: link };
     });
   }
 
