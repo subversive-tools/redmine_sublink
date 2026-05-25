@@ -1873,11 +1873,26 @@
           var healedProject = m[1];
           var healedSubitem = decodeURIComponent(m[2]).replace(/_/g, ' ');
 
+          var wasHealed = false;
           if (candidate.type === 'double_bracket') {
+            if (candidate.project !== healedProject || candidate.subitem !== healedSubitem) {
+              wasHealed = true;
+            }
             candidate.project = healedProject;
             candidate.subitem = healedSubitem;
           } else {
+            var origUrl = candidate.url;
+            if (origUrl.indexOf(location.origin) === 0) {
+              origUrl = origUrl.substring(location.origin.length);
+            }
+            if (origUrl !== finalUrl) {
+              wasHealed = true;
+            }
             candidate.url = finalUrl;
+          }
+
+          if (wasHealed) {
+            showToast("Link automatisch korrigiert (Ziel wurde verschoben)");
           }
         }
 
@@ -1886,6 +1901,27 @@
       .catch(function () {
         proceedWithEdit(ta, candidate);
       });
+  }
+
+  function showToast(message) {
+    var toast = document.createElement('div');
+    toast.className = 'sublink-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#2d3748;color:#fff;padding:8px 16px;border-radius:4px;font-size:12.5px;z-index:100005;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;pointer-events:none;opacity:0;transition:opacity 0.25s, transform 0.25s;transform:translateY(10px);';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(function () {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+    }, 10);
+
+    setTimeout(function () {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      setTimeout(function () {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 250);
+    }, 3000);
   }
 
   function proceedWithEdit(ta, candidate) {
