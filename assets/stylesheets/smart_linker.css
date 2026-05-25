@@ -4,12 +4,10 @@
 
 /* ── Panel ───────────────────────────────────────────────────────────────── */
 .sl-panel {
-  border: 1px solid #b0bec5;
-  border-radius: 7px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
   background: #fff;
-  box-shadow: 0 10px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  font-size: 13px;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
   overflow: hidden;
 }
 
@@ -67,18 +65,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   cursor: pointer;
-  border-bottom: 1px solid #f0f4f8;
   transition: background 0.08s, color 0.08s;
-  min-height: 36px;
+  min-height: 28px;
   box-sizing: border-box;
 }
-.sl-list li:last-child { border-bottom: none; }
 
 .sl-list li:hover,
 .sl-list li.highlight {
-  background: #1b75bb; /* Redmine standard blue fallback */
+  background: #759FCF; /* Redmine standard Tribute blue highlight */
   color: #fff;
 }
 
