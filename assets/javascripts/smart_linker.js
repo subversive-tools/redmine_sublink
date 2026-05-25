@@ -1892,7 +1892,7 @@
           }
 
           if (wasHealed) {
-            showToast("Link automatisch korrigiert (Ziel wurde verschoben)");
+            showTooltipAboveCursor(ta, candidate.start, "Link korrigiert (Ziel verschoben)");
           }
         }
 
@@ -1903,25 +1903,46 @@
       });
   }
 
-  function showToast(message) {
-    var toast = document.createElement('div');
-    toast.className = 'sublink-toast';
-    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#2d3748;color:#fff;padding:8px 16px;border-radius:4px;font-size:12.5px;z-index:100005;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;pointer-events:none;opacity:0;transition:opacity 0.25s, transform 0.25s;transform:translateY(10px);';
-    toast.textContent = message;
-    document.body.appendChild(toast);
+  function showTooltipAboveCursor(ta, charIdx, message) {
+    var off = measureCursor(ta, charIdx);
+    var r   = ta.getBoundingClientRect();
 
+    var left = r.left + off.left;
+    var top  = r.top + off.top - 28; // Position 28px above the line
+
+    // Clamp left so it doesn't run off the left edge
+    left = Math.max(4, left);
+
+    var tooltip = document.createElement('div');
+    tooltip.className = 'sublink-tooltip';
+    tooltip.style.cssText = 'position:fixed;background:#2d3748;color:#fff;padding:4px 8px;border-radius:3px;font-size:11px;z-index:100005;box-shadow:0 2px 6px rgba(0,0,0,0.15);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;pointer-events:none;opacity:0;transition:opacity 0.2s, transform 0.2s;transform:translateY(5px);white-space:nowrap;';
+    tooltip.textContent = message;
+
+    // Tiny pointing arrow at the bottom
+    var arrow = document.createElement('div');
+    arrow.style.cssText = 'position:absolute;bottom:-4px;left:12px;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:4px solid #2d3748;';
+    tooltip.appendChild(arrow);
+
+    document.body.appendChild(tooltip);
+
+    // Position exactly
+    tooltip.style.left = left + 'px';
+    tooltip.style.top  = top + 'px';
+
+    // Fade-in
     setTimeout(function () {
-      toast.style.opacity = '1';
-      toast.style.transform = 'translateY(0)';
+      tooltip.style.opacity = '1';
+      tooltip.style.transform = 'translateY(0)';
     }, 10);
 
+    // Fade-out
     setTimeout(function () {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(10px)';
+      tooltip.style.opacity = '0';
+      tooltip.style.transform = 'translateY(-5px)';
       setTimeout(function () {
-        if (toast.parentNode) toast.parentNode.removeChild(toast);
-      }, 250);
-    }, 3000);
+        if (tooltip.parentNode) tooltip.parentNode.removeChild(tooltip);
+      }, 200);
+    }, 2500);
   }
 
   function proceedWithEdit(ta, candidate) {
