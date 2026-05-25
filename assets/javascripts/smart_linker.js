@@ -1160,9 +1160,11 @@
       );
       return;
     }
-    m = location.pathname.match(/\/projects\/([^\/]+)\/wiki\/([^\/\?]+)/);
+    m = location.pathname.match(/\/projects\/([^\/]+)\/wiki\/(.+)$/);
     if (m) {
-      loadJSON('/projects/' + m[1] + '/wiki/' + m[2] + '.json',
+      var pid = m[1];
+      var pageTitle = m[2].replace(/\/(edit|rename|history|diff|annotate|new|protect)$/i, '');
+      loadJSON('/projects/' + pid + '/wiki/' + pageTitle + '.json?include=attachments',
         function (d) { cache.attachments[key] = (d.wiki_page && d.wiki_page.attachments) || []; cb(); },
         function ()   { cache.attachments[key] = []; cb(); }
       );
