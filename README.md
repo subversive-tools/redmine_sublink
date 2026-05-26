@@ -1,4 +1,4 @@
-# Redmine Sublink Plugin
+# Redmine Subtrigger Plugin
 
 ![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)
 ![Redmine](https://img.shields.io/badge/Redmine-5.0%20%7C%206.0-red.svg?logo=redmine)
@@ -11,12 +11,17 @@ A Redmine plugin that brings smart autocomplete and linking to every wiki text a
 ## Features
 
 - **`>>` — Finder-Style Smart Linker**: A premium macOS Finder column-style popover to build any link without knowing the syntax:
-  - 🔗 **General links**: E-Mail (`mailto:`), Web URL (absolute prefixing), and current page attachments
-  - 📁 **Hierarchical Project Navigation**: Indented subproject tree sorting with parent context retention
-  - 📂 **Multi-Level Cascading Columns**: Projects list $\rightarrow$ Subpages list (Issues, Wiki, Members, Files, etc.) $\rightarrow$ Sub-items list
-  - 🗂️ **Dynamic Project Files Support**: Fetches and formats project-wide files via JSON API
-  - ⚙️ **Tab-Triggered Link Editing**: Place caret cursor on any link (Markdown, Textile, Double Brackets, raw attachments/issues) and press `Tab` to instantly reopen the Smart Linker cascaded at that exact item!
-  - 🎨 **Beautiful Custom Wireframe SVGs**: Delicate, outline wireframe monochrome icons (14px centered) matching Redmine's `/admin` UI style, dynamically turning white on row focus.
+  - **General links**: E-Mail (`mailto:`), Web URL (absolute prefixing), and current page attachments
+  - **Hierarchical Project Navigation**: Indented subproject tree sorting with parent context retention
+  - **Multi-Level Cascading Columns**: Projects list $\rightarrow$ Subpages list (Issues, Wiki, Members, Files, News, Documents, etc.) $\rightarrow$ Sub-items list
+  - **Real-Time Wiki Page Heading & Anchor Autocomplete**: Deep 4th level transition (`Wiki` $\rightarrow$ `Page` $\rightarrow$ `#anchor`) parsing page headings in real-time and dynamically converting headings to Redmine-compatible slugified anchors.
+  - **Project News Browsing & Autocomplete**: Complete News articles browsing and linking with comment counts (`news#ID` in Textile, `[Title](news:ID)` in Markdown).
+  - **Smart Documents Integration**: Parses and matches project Documents dynamically by crawling `/projects/{project_id}/documents` HTML.
+  - **Dynamic Third-Party Addon Support**: Automatically scrapes active Redmine `#main-menu` links on load to dynamically register and link third-party tabs (like DMSF, Questions, Checklists, etc.) in the subpages menu.
+  - **Dynamic Project Files Support**: Fetches and formats project-wide files via JSON API, resolving proper native Redmine-compliant links (`![](filename)` for images, `attachment:"filename"` for files) and percent-encoding spaces for perfect rendering.
+  - **Tab-Triggered Link Editing**: Place caret cursor on any link (Markdown, Textile, Double Brackets, raw attachments/issues) and press `Tab` to instantly reopen the Smart Linker cascaded at that exact item!
+  - **Beautiful Custom Wireframe SVGs**: Delicate, outline wireframe monochrome icons (14px centered) matching Redmine's `/admin` UI style, dynamically turning white on row focus.
+  - **Accidental Hover Prevention**: Automatic cursor hide and hover gating (`sl-mouse-inactive`) on menu trigger or level changes to avoid misclicks.
 - **`{{` — Macro Autocomplete**: Type `{{` to get a dropdown of all available Redmine macros with descriptions and a full detail preview panel.
 - **`@` — Instant Mention Dropdown**: Shows up immediately after `@` (no minimum character required) for extremely fast user tagging.
 - **100% Dynamic Core Redmine Localization**: Translates all subpage titles, search terms, and backtracking autotexts completely on the fly based on Redmine's Ruby core locale dictionary. Fully supports English, German (disambiguating duplicate files/attachments to *"Dateien"* / *"Anhänge"*), French, Spanish, Japanese, and more.
@@ -30,13 +35,13 @@ All features work in **every wiki text area**: wiki pages, issue descriptions, i
 ## Installation
 
 > [!IMPORTANT]
-> The plugin directory **MUST** be named `redmine_sublink` for the hook to load correctly.
+> The plugin directory **MUST** be named `redmine_subtrigger` for the hook to load correctly.
 
 1. **Clone** into your plugins directory:
 
    ```bash
    cd /path/to/redmine/plugins
-   git clone https://github.com/subversive-tools/redmine_sublink.git redmine_sublink
+   git clone https://github.com/subversive-tools/redmine_subtrigger.git redmine_subtrigger
    ```
 
 2. **Restart Redmine** (no migrations required).
@@ -62,8 +67,23 @@ Type `>>` after a space or at the start of a line. An ultra-compact Finder-style
 - **Tab / Enter / ArrowRight (`→`)**: Expand the highlighted intermediate item (project or subpage branch), appending a `>` delimiter (e.g. `>>myproject>Tickets>`) and cascading to the next adjacent column.
 - **Escape (`Esc`) / ArrowLeft (`←`) / Shift+Tab**: Backtrack one column level to the left, safely reverting the path and restoring the highlighted parent selection without closing the panel.
 
+#### Wiki Page Anchor Autocomplete (Level 4)
+Typing `#` after a Wiki page name (e.g., `>>project>Wiki>Page#`) or highlighting a page in Column 3 and pressing `Tab` / `ArrowRight` (`→`) triggers **Wiki Anchor Autocomplete**:
+1. It queries the raw content of the Wiki page on the fly.
+2. It parses the page's headings (supports both Textile and Markdown syntax).
+3. It slugifies the headings to match standard Redmine anchors and renders them in Column 4 (displacing previous columns in Finder style).
+4. Selecting an anchor and pressing **Enter** inserts a fully formatted Wiki page link with the anchor suffix (e.g., `[[Page#My-Heading]]` or `[Page Title](WikiPageName#My-Heading)`).
+
+#### News, Documents & Project Files
+- **News**: Link project news directly. Auto-completes from `/projects/{project_id}/news.json`, showing comment counts, and inserting clean native links (`news#ID` in Textile, `[Title](news:ID)` in Markdown).
+- **Documents**: Parses project documents dynamically from `/projects/{project_id}/documents` HTML, enabling instant autocomplete lookup.
+- **Files**: Integrates project files via JSON API, inserting native links (`attachment:"filename.ext"` or `![](filename.ext)` for images) and percent-encoding spaces correctly.
+
+#### Dynamic Third-Party Addons
+The Smart Linker dynamically crawls the `#main-menu` navigation on load. Any third-party Redmine addon tab (e.g., DMSF, Questions, Checklists, etc.) will automatically appear as an option in the subpage list and can be searched and linked directly.
+
 #### Leaf Level Finalization
-- **ArrowRight (`→`) / Tab**: On leaf items (Column 3 items or subpages in Column 2 that have no submenu like Overview, Calendar, Gantt, etc.), `Tab` and `ArrowRight` do nothing, keeping your typed query pristine.
+- **ArrowRight (`→`) / Tab**: On leaf items (Column 3 items, anchor items, or subpages in Column 2 that have no submenu like Overview, Calendar, Gantt, etc.), `Tab` and `ArrowRight` do nothing, keeping your typed query pristine.
 - **Enter / Return** (or mouse click): Instantly converts the query to the clean, finalized Textile/Markdown link and inserts it directly at the cursor, closing the panel.
 
 #### Round-trip Link Editing

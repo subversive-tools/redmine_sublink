@@ -1,4 +1,4 @@
-# Plugin redmine_sublink
+# Plugin redmine_subtrigger
 # Provides smart linking and wiki macro autocomplete in all Redmine wiki text areas.
 #
 # Features:
@@ -11,15 +11,22 @@
 
 require 'redmine'
 
-Redmine::Plugin.register :redmine_sublink do
-  name        'Sublink'
+Redmine::Plugin.register :redmine_subtrigger do
+  name        'Subtrigger'
   author      'Stefan Mischke'
-  description 'Smart linking and autocomplete for Redmine — macros ({{), @-mentions, and the >> Smart Linker for issues, wiki pages, members, e-mail, web and attachments.'
-  version     '0.4.0'
-  url         'https://github.com/subversive-tools/redmine_sublink'
+  description 'Smart linking and autocomplete for Redmine — macros ({{), @-mentions, and the Smart Linker for issues, wiki pages, members, e-mail, web and attachments.'
+  version     '0.5.0'
+  url         'https://github.com/subversive-tools/redmine_subtrigger'
   author_url  'https://github.com/modoq'
+
+  settings default: {
+    'enable_macros' => '1',
+    'enable_mentions' => '1',
+    'enable_smart_linker' => '1',
+    'smart_linker_trigger' => '>>'
+  }, partial: 'settings/subtrigger_settings'
 end
 
 # Load the hook class — self-registers with Redmine::Hook on load
 require_relative 'lib/macro_autocomplete_hook'
-SublinkerHook
+SubtriggerHook

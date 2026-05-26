@@ -11,7 +11,7 @@
   function createDropdown() {
     var d = document.createElement('div');
     // Reuse Redmine's existing .tribute-container styles (tribute-5.1.3.css + application.css)
-    d.className = 'tribute-container sublink-container';
+    d.className = 'tribute-container subtrigger-container';
     d.style.display  = 'none';
     // fixed: viewport-relative, immune to overflow:hidden on any ancestor
     d.style.position = 'fixed';
@@ -22,7 +22,7 @@
     d.appendChild(macList);
 
     macDetail = document.createElement('div');
-    macDetail.className = 'sublink-detail';
+    macDetail.className = 'subtrigger-detail';
     macDetail.style.display = 'none';
     d.appendChild(macDetail);
 
@@ -33,8 +33,8 @@
   // ── Attach to textarea ───────────────────────────────────────────────────────
 
   function attach(textarea) {
-    if (textarea._sublinkBound) return;
-    textarea._sublinkBound = true;
+    if (textarea._subtriggerBound) return;
+    textarea._subtriggerBound = true;
 
     textarea.addEventListener('input', function () { onInput(this); });
     textarea.addEventListener('keydown', onKeydown.bind(textarea));
@@ -283,7 +283,7 @@
   var MAX_MENTION_RESULTS = 10;
 
   function patchTributeOnElement(el) {
-    if (el._sublinkTributePatchDone) return;
+    if (el._subtriggerTributePatchDone) return;
     // Tribute 5.x attaches the instance as element.tribute (fallbacks for other versions)
     var tribute = el.tribute || el._tribute || el._tributeInstance;
     if (!tribute || !tribute.collection) return;
@@ -295,18 +295,18 @@
       col.menuShowMinLength = 0;
 
       // Wrap values() to cap results at MAX_MENTION_RESULTS
-      if (!col._sublinkLimited) {
+      if (!col._subtriggerLimited) {
         var orig = col.values;
         col.values = function (text, cb) {
           orig.call(col, text, function (results) {
             cb((results || []).slice(0, MAX_MENTION_RESULTS));
           });
         };
-        col._sublinkLimited = true;
+        col._subtriggerLimited = true;
       }
     });
 
-    el._sublinkTributePatchDone = true;
+    el._subtriggerTributePatchDone = true;
   }
 
   function patchAllTribute() {
@@ -318,40 +318,53 @@
   // ── Init ─────────────────────────────────────────────────────────────────────
 
   function init() {
-    MACROS = (window.REDMINE_MACROS || []);
-    if (MACROS.length === 0) return;
+    var config = window.REDMINE_SUBTRIGGER_CONFIG || {
+      enable_macros: true,
+      enable_mentions: true,
+      enable_smart_linker: true,
+      smart_linker_trigger: '>>'
+    };
 
-    dropdown = createDropdown();
+    if (config.enable_macros) {
+      MACROS = (window.REDMINE_MACROS || []);
+      if (MACROS.length > 0) {
+        dropdown = createDropdown();
+        attachAll(document);
+      }
+    }
 
-    // Attach to all wiki-edit textareas present at load time
-    // Covers: wiki pages, issue descriptions, issue notes, journal edits,
-    //         news comments, forum messages, project/document descriptions etc.
-    attachAll(document);
+    if (config.enable_mentions) {
+      patchAllTribute();
+    }
 
-    // Watch for dynamically added textareas (e.g. AJAX-loaded forms,
-    // inline edit panels, comment edit links, issue update forms)
-    var observer = new MutationObserver(function (mutations) {
-      mutations.forEach(function (m) {
-        m.addedNodes.forEach(function (node) {
-          if (node.nodeType !== 1) return;
-          attachAll(node);
-          // Also patch Tribute instances that Redmine may attach to the new node
-          setTimeout(function () { patchAllTribute(); }, 200);
+    if (config.enable_macros || config.enable_mentions) {
+      // Watch for dynamically added textareas (e.g. AJAX-loaded forms,
+      // inline edit panels, comment edit links, issue update forms)
+      var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+          m.addedNodes.forEach(function (node) {
+            if (node.nodeType !== 1) return;
+            if (config.enable_macros) attachAll(node);
+            // Also patch Tribute instances that Redmine may attach to the new node
+            if (config.enable_mentions) {
+              setTimeout(function () { patchAllTribute(); }, 200);
+            }
+          });
         });
       });
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+      observer.observe(document.body, { childList: true, subtree: true });
 
-    // Fallback: re-scan every second for a few seconds after load.
-    // Covers both macro textareas and Tribute @-mention patching because
-    // Tribute is initialised by Redmine's own JS after our script runs.
-    var scanCount = 0;
-    var scanTimer = setInterval(function () {
-      attachAll(document);
-      patchAllTribute();
-      scanCount++;
-      if (scanCount >= 5) clearInterval(scanTimer);
-    }, 1000);
+      // Fallback: re-scan every second for a few seconds after load.
+      // Covers both macro textareas and Tribute @-mention patching because
+      // Tribute is initialised by Redmine's own JS after our script runs.
+      var scanCount = 0;
+      var scanTimer = setInterval(function () {
+        if (config.enable_macros) attachAll(document);
+        if (config.enable_mentions) patchAllTribute();
+        scanCount++;
+        if (scanCount >= 5) clearInterval(scanTimer);
+      }, 1000);
+    }
   }
 
   if (document.readyState === 'loading') {

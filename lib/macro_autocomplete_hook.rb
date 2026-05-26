@@ -1,7 +1,7 @@
-class SublinkerHook < Redmine::Hook::ViewListener
+class SubtriggerHook < Redmine::Hook::ViewListener
   BASE = File.dirname(File.dirname(__FILE__))
 
-  CSS_FILES = %w[sublink.css smart_linker.css].freeze
+  CSS_FILES = %w[subtrigger.css smart_linker.css].freeze
   JS_FILES  = %w[macro_autocomplete.js smart_linker.js].freeze
 
   def view_layouts_base_html_head(context = {})
@@ -9,6 +9,14 @@ class SublinkerHook < Redmine::Hook::ViewListener
     css     = CSS_FILES.filter_map { |f| read_asset('stylesheets', f) }.join("\n")
     js_code = JS_FILES.filter_map  { |f| read_asset('javascripts',  f) }.join("\n")
     return '' if js_code.blank?
+
+    settings = Setting.plugin_redmine_subtrigger || {}
+    subtrigger_config = {
+      enable_macros: settings['enable_macros'] != '0',
+      enable_mentions: settings['enable_mentions'] != '0',
+      enable_smart_linker: settings['enable_smart_linker'] != '0',
+      smart_linker_trigger: settings['smart_linker_trigger'].presence || '>>'
+    }
 
     formatting = Setting.text_formatting.to_s
     translations = {
@@ -46,6 +54,7 @@ class SublinkerHook < Redmine::Hook::ViewListener
     <<~HTML.html_safe
       <style>#{css}</style>
       <script>
+        window.REDMINE_SUBTRIGGER_CONFIG = #{subtrigger_config.to_json};
         window.REDMINE_MACROS = #{macros.to_json};
         window.REDMINE_FORMATTING = #{formatting.to_json};
         window.REDMINE_SUBPAGE_TRANSLATIONS = #{translations.to_json};
@@ -78,7 +87,7 @@ class SublinkerHook < Redmine::Hook::ViewListener
 
     (registered + implicit).sort_by { |m| m[:name] }
   rescue => e
-    Rails.logger.warn "[Sublink] SublinkerHook: could not collect macros: #{e.message}"
+    Rails.logger.warn "[Subtrigger] SubtriggerHook: could not collect macros: #{e.message}"
     []
   end
 end

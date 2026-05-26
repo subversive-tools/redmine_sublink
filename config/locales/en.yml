@@ -13,3 +13,7 @@ en:
   label_no_anchors: "No matching anchors found"
   label_no_anchors_page: "No headings/anchors on this page"
   label_link_healed: "Link automatically updated (target was moved)"
+  label_enable_macros: "Enable macro autocomplete ({{)"
+  label_enable_mentions: "Enable mentions / @-autocomplete patch (@)"
+  label_enable_smart_linker: "Enable Smart Linker"
+  label_smart_linker_trigger: "Smart Linker trigger characters"

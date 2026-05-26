@@ -13,3 +13,7 @@ de:
   label_no_anchors: "Keine passenden Anker gefunden"
   label_no_anchors_page: "Keine Überschriften/Anker auf dieser Seite"
   label_link_healed: "Link korrigiert (Ziel verschoben)"
+  label_enable_macros: "Makro-Autocomplete aktivieren ({{)"
+  label_enable_mentions: "Mentions / @-Autocomplete-Patch aktivieren (@)"
+  label_enable_smart_linker: "Smart Linker aktivieren"
+  label_smart_linker_trigger: "Smart Linker Trigger-Zeichen"

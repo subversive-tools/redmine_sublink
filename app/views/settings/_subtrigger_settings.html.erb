@@ -1,0 +1,19 @@
+<p>
+  <label for="settings_enable_macros"><%= l(:label_enable_macros) %></label>
+  <%= check_box_tag 'settings[enable_macros]', '1', settings['enable_macros'] != '0' %>
+</p>
+
+<p>
+  <label for="settings_enable_mentions"><%= l(:label_enable_mentions) %></label>
+  <%= check_box_tag 'settings[enable_mentions]', '1', settings['enable_mentions'] != '0' %>
+</p>
+
+<p>
+  <label for="settings_enable_smart_linker"><%= l(:label_enable_smart_linker) %></label>
+  <%= check_box_tag 'settings[enable_smart_linker]', '1', settings['enable_smart_linker'] != '0' %>
+</p>
+
+<p>
+  <label for="settings_smart_linker_trigger"><%= l(:label_smart_linker_trigger) %></label>
+  <%= text_field_tag 'settings[smart_linker_trigger]', settings['smart_linker_trigger'] || '>>', size: 10 %>
+</p>

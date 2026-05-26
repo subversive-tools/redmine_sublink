@@ -1,5 +1,5 @@
 /**
- * smart_linker.js — Redmine Sublink: Smart Linker
+ * smart_linker.js — Redmine Subtrigger: Smart Linker
  *
  * Trigger: >> (nach Leerzeichen oder Zeilenanfang)
  *
@@ -16,6 +16,25 @@
  */
 (function () {
   'use strict';
+
+  var config = window.REDMINE_SUBTRIGGER_CONFIG || {
+    enable_macros: true,
+    enable_mentions: true,
+    enable_smart_linker: true,
+    smart_linker_trigger: '>>'
+  };
+
+  if (!config.enable_smart_linker) {
+    return;
+  }
+
+  function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  var trigger = config.smart_linker_trigger || '>>';
+  var escapedTrigger = escapeRegExp(trigger);
+  var triggerRegex = new RegExp('(^|[\\s\\n])' + escapedTrigger + '([^\\n]*)$');
 
   function t(key, fallback) {
     if (window.REDMINE_SUBPAGE_TRANSLATIONS && window.REDMINE_SUBPAGE_TRANSLATIONS[key]) {
@@ -189,7 +208,7 @@
       if (hashIdx !== -1) {
         repl = v.substring(tStart, hashIdx);
       } else {
-        repl = '>>' + curProj.identifier + '>' + getSubpageLabel('wiki') + '>' + (col2Items[selIdx2] ? col2Items[selIdx2].label : '');
+        repl = trigger + curProj.identifier + '>' + getSubpageLabel('wiki') + '>' + (col2Items[selIdx2] ? col2Items[selIdx2].label : '');
       }
       activeTa.value = v.substring(0, tStart) + repl + v.substring(tEnd);
       tEnd = tStart + repl.length;
@@ -317,8 +336,8 @@
   function cancel() {
     if (activeTa && tStart >= 0) {
       var v   = activeTa.value;
-      var end = tEnd >= 0 ? tEnd : tStart + 2;
-      if (v.substring(tStart, tStart + 2) === '>>') {
+      var end = tEnd >= 0 ? tEnd : tStart + trigger.length;
+      if (v.substring(tStart, tStart + trigger.length) === trigger) {
         activeTa.value = v.substring(0, tStart) + v.substring(end);
         activeTa.selectionStart = activeTa.selectionEnd = tStart;
         activeTa.dispatchEvent(new Event('input', { bubbles: true }));
@@ -332,7 +351,7 @@
     if (activeTa && tStart >= 0) {
       var v = activeTa.value;
       var projId = curProj ? curProj.identifier : '';
-      var repl = '>>' + projId;
+      var repl = trigger + projId;
       activeTa.value = v.substring(0, tStart) + repl + v.substring(tEnd);
       tEnd = tStart + repl.length;
       activeTa.selectionStart = activeTa.selectionEnd = tEnd;
@@ -345,7 +364,7 @@
     if (activeTa && tStart >= 0 && curProj) {
       var v = activeTa.value;
       var sub = curSubpage ? getSubpageLabel(curSubpage) : '';
-      var repl = '>>' + curProj.identifier + '>' + sub;
+      var repl = trigger + curProj.identifier + '>' + sub;
       activeTa.value = v.substring(0, tStart) + repl + v.substring(tEnd);
       tEnd = tStart + repl.length;
       activeTa.selectionStart = activeTa.selectionEnd = tEnd;
@@ -361,14 +380,14 @@
     if (activeCol === 1) {
       var item = col1Items[selIdx1];
       if (item && item.project) {
-        repl = '>>' + item.project.identifier;
+        repl = trigger + item.project.identifier;
       } else {
         return;
       }
     } else if (activeCol === 2) {
       var item = col2Items[selIdx2];
       if (item && curProj) {
-        repl = '>>' + curProj.identifier + '>' + item.label;
+        repl = trigger + curProj.identifier + '>' + item.label;
       } else {
         return;
       }
@@ -385,7 +404,7 @@
             return;
           }
         } else {
-          repl = '>>' + curProj.identifier + '>' + getSubpageLabel(curSubpage) + '>' + txt;
+          repl = trigger + curProj.identifier + '>' + getSubpageLabel(curSubpage) + '>' + txt;
         }
       } else {
         return;
@@ -1285,7 +1304,7 @@
       cb();
     })
     .catch(function (err) {
-      console.warn('[Sublink] Failed to fetch HTML documents:', err);
+      console.warn('[Subtrigger] Failed to fetch HTML documents:', err);
       cache.documents[pid] = [];
       cb();
     });
@@ -1469,7 +1488,7 @@
       curProj = proj;
       st = 'subpages';
 
-      var repl = '>>' + proj.identifier + '>';
+      var repl = trigger + proj.identifier + '>';
       ta.value = v.substring(0, tStart) + repl + v.substring(tEnd);
       tEnd = tStart + repl.length;
       ta.selectionStart = ta.selectionEnd = tEnd;
@@ -1493,7 +1512,7 @@
       st = 'subitems';
       activeCol = 3;
 
-      var repl = '>>' + curProj.identifier + '>' + item.label + '>';
+      var repl = trigger + curProj.identifier + '>' + item.label + '>';
       ta.value = v.substring(0, tStart) + repl + v.substring(tEnd);
       tEnd = tStart + repl.length;
       ta.selectionStart = ta.selectionEnd = tEnd;
@@ -1509,7 +1528,7 @@
     if (curSubpage === 'wiki' && st !== 'anchors') {
       var ta = activeTa;
       var v  = ta.value;
-      var repl = '>>' + curProj.identifier + '>' + getSubpageLabel(curSubpage) + '>' + item.label + '#';
+      var repl = trigger + curProj.identifier + '>' + getSubpageLabel(curSubpage) + '>' + item.label + '#';
       ta.value = v.substring(0, tStart) + repl + v.substring(tEnd);
       tEnd = tStart + repl.length;
       ta.selectionStart = ta.selectionEnd = tEnd;
@@ -1547,7 +1566,7 @@
   function doInsert(linkText) {
     if (!activeTa || tStart < 0) { closePanel(); return; }
     var v   = activeTa.value;
-    var end = tEnd >= 0 ? tEnd : tStart + 2;
+    var end = tEnd >= 0 ? tEnd : tStart + trigger.length;
     activeTa.value = v.substring(0, tStart) + linkText + v.substring(end);
     var np = tStart + linkText.length;
     activeTa.selectionStart = activeTa.selectionEnd = np;
@@ -1564,7 +1583,7 @@
     var ta     = e.target;
     var pos    = ta.selectionStart;
     var before = ta.value.substring(0, pos);
-    var m      = before.match(/(^|[\s\n])>>([^\n]*)$/);
+    var m      = before.match(triggerRegex);
 
     if (!m) {
       if (st !== 'closed') closePanel();
@@ -1590,7 +1609,7 @@
         prefill += '>';
       }
 
-      var newText = '>>' + prefill;
+      var newText = trigger + prefill;
       ta.value = before.substring(0, tStart) + newText + ta.value.substring(tEnd);
       tEnd = tStart + newText.length;
       ta.selectionStart = ta.selectionEnd = tEnd;
@@ -2013,7 +2032,7 @@
       }
     }
 
-    var q = '>>';
+    var q = trigger;
     if (project) {
       q += project;
     }
@@ -2119,7 +2138,7 @@
     left = Math.max(4, left);
 
     var tooltip = document.createElement('div');
-    tooltip.className = 'sublink-tooltip';
+    tooltip.className = 'subtrigger-tooltip';
     tooltip.style.cssText = 'position:fixed;background:#2d3748;color:#fff;padding:4px 8px;border-radius:3px;font-size:11px;z-index:100005;box-shadow:0 2px 6px rgba(0,0,0,0.15);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;pointer-events:none;opacity:0;transition:opacity 0.2s, transform 0.2s;transform:translateY(5px);white-space:nowrap;';
     tooltip.textContent = message;
 
